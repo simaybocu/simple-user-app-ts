@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "es2020",                    /* Hedef ECMAScript sürümü */
+    "module": "commonjs",                  /* Modül sistemini belirleme (commonjs, esnext, umd, etc.) */
+    "lib": ["es2015", "es2016", "es2017"], /* Kullanılabilir kütüphane tanımları */
+    "esModuleInterop": true,                /* import/export uyumluluğunu sağlamak için */
+    "skipLibCheck": true,                  /* İçe aktarılan kütüphaneleri kontrol etme (daha hızlı derleme için) */
+    "forceConsistentCasingInFileNames": true, /* Dosya adlarında büyük/küçük harf duyarlılığını zorlama */
+    "strict": true,                        /* Tüm sıkı denetim seviyelerini etkinleştir */
+    "strictNullChecks": true,              /* null değerlerine karşı daha sıkı kontrol */
+    "noImplicitAny": true,                 /* İmlicit 'any' tipini kabul etmemeyi zorlama */
+    "noUnusedLocals": true,                /* Kullanılmayan yerel değişkenleri raporlama */
+    "noUnusedParameters": true,            /* Kullanılmayan parametreleri raporlama */
+    "noImplicitReturns": true,             /* İmlicit 'return' olmayan tüm kod yollarını raporlama */
+    "noFallthroughCasesInSwitch": true,   /* switch ifadelerinde düşme-through durumlarına karşı kontrol */
+    "moduleResolution": "node",            /* Modül çözünürlüğü stratejisi (node, classic) */
+    "baseUrl": "./",                       /* Kök dizin (relative paths için) */
+    "outDir": "./dist",                    /* Derlenmiş dosyaların çıkış dizini */
+    "rootDir": "./src",                    /* Kaynak dosyaların bulunduğu dizin */
+    "typeRoots": ["./node_modules/@types"], /* @types kütüphanelerinin bulunduğu dizinler */
+  },
+  "include": ["src/**/*.ts"],              /* Derlenmesi gereken dosyaların listesi (glob pattern kullanılabilir) */
+  "exclude": ["node_modules", "dist"],     /* Derlenmeyecek dosyaların listesi */
+  "compileOnSave": false                   /* Kaydedildiğinde otomatik derleme */
+}
