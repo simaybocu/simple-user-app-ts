@@ -1,9 +1,9 @@
 import User from '../models/user';
 import Redis from 'ioredis'
-import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '../config/constants';
+import {ERROR_MESSAGES, SUCCESS_MESSAGES} from '../config/constants';
+import {logger} from '../logger/logger';
 
 const redis = new Redis()
-
 
 export default class UserService {
     constructor() {}
@@ -14,37 +14,38 @@ export default class UserService {
             const usersData = await redis.get('users');
             return usersData ? JSON.parse(usersData) : [];
         } catch (error) {
-            console.error('Error getting users:', error);
+            logger.error(`Error getting users: ${error}`);
             throw error;
         }
     }
 
     // Yeni bir kullanıcı ekle
-    async addUser(user : User): Promise<User[] | string | Error> {
+    async addUser(user : User): Promise < {usernumber: number,user: User} | string > {
         try {
             const users = await this.getUsers();
+            //TODO: users.length kontrol ettirilecek
             const existingUser = users.find(existingUser => existingUser.id === user.id); //find metodunda eşleşme olursa true döner, eşleşme bulunmazsa undefined döner
 
             if (existingUser) { // Kullanıcı zaten varsa, bir hata mesajı döndür.
                 return ERROR_MESSAGES.USER_ALREADY_EXISTS
             }
-            //TODO: daha farklı hata kontrolleri eklenebilir.
 
-            //mevcut kullanıcı dizisine yeni bir kullanıcı eklenir
-            const updatedUsers = [...users, user];  //TODO: Kullanıcı eklendikten sonra sadece o kullanıcıyı dön response olarak. O kullanıcının listedeki kaçıncı kullanıcı olduğunu belirten bir şey de dön.
+            //const usernumber = await redis.incr('usernumber');   // otomatik artan anahtar //TODO: Test edilecek
+            const usernumber = users.length + 1;
 
-            //TODO: Redis hata yakalama iyileştirilecek
-            try { 
-              await redis.set('users', JSON.stringify(updatedUsers)); //TODO: key kısmı için araştırma, iyileştirme. Redis işlemlerini fonksiyona alma
-              console.log(SUCCESS_MESSAGES.REDIS_SAVE_SUCCESS); //TODO: loggerlanacak
+            // TODO: Redis hata yakalama iyileştirilecek
+            try { // TODO: redis işlemlerinde sadece son eklenen kullanıcıyı users dizisine kaydetmek istiyorum, redis string dışında değer set etmek için araştırma. Redis array araştırma
+                await redis.set('users', JSON.stringify([...users, user])); // TODO: key kısmı için araştırma, iyileştirme. Redis işlemlerini fonksiyona alma
+                logger.info(SUCCESS_MESSAGES.REDIS_SAVE_SUCCESS);
             } catch (redisError) {
-              console.error(ERROR_MESSAGES.REDIS_SAVE_FAIL, redisError); //TODO: logger
-              return ERROR_MESSAGES.REDIS_SAVE_FAIL;
-          }
-            return updatedUsers; //Başarılı olduğunda kullanıcıları döndür.
+                return ERROR_MESSAGES.REDIS_SAVE_FAIL;
+            }
+            return {usernumber, user}
         } catch (error) {
-            console.error('Error adding user:', (error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR)); //TODO: logger
-            throw new Error('Kullanıcı ekleme işlemi başarısız. Hata: ' + (error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR));
+            logger.error(`Error adding user: ${(error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR)}`);
+            throw new Error('Adding user failed. Error: ' + (
+            error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR
+        ));
         }
     }
 
