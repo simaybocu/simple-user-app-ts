@@ -1,9 +1,8 @@
 import User from '../models/user';
-import Redis from 'ioredis'
+import {redisUtils} from '../redis/redisUtils';
 import {ERROR_MESSAGES, SUCCESS_MESSAGES} from '../config/constants';
 import {logger} from '../logger/logger';
 
-const redis = new Redis()
 
 export default class UserService {
     constructor() {}
@@ -11,7 +10,7 @@ export default class UserService {
     // Tüm kullanıcıları almak için
     async getUsers(): Promise < User[] > {
         try {
-            const usersData = await redis.get('users');
+            const usersData = await redisUtils.getCacheById('users'); //TODO: detaylı incelenecek acw'den
             return usersData ? JSON.parse(usersData) : [];
         } catch (error) {
             logger.error(`Error getting users: ${error}`);
@@ -30,12 +29,12 @@ export default class UserService {
                 return ERROR_MESSAGES.USER_ALREADY_EXISTS
             }
 
-            //const usernumber = await redis.incr('usernumber');   // otomatik artan anahtar //TODO: Test edilecek
+            //const usernumber = await redis.incr('usernumber');   // otomatik artan anahtar //TODO: Test edilecek, redis doc.u incelenecek bu özellik için
             const usernumber = users.length + 1;
 
-            // TODO: Redis hata yakalama iyileştirilecek
             try { // TODO: redis işlemlerinde sadece son eklenen kullanıcıyı users dizisine kaydetmek istiyorum, redis string dışında değer set etmek için araştırma. Redis array araştırma
-                await redis.set('users', JSON.stringify([...users, user])); // TODO: key kısmı için araştırma, iyileştirme. Redis işlemlerini fonksiyona alma
+                await redisUtils.set('users', JSON.stringify([...users, user])); // TODO: key kısmı için araştırma, iyileştirme
+                //TODO: set işleminden sonra expire kullanmak için araştırma
                 logger.info(SUCCESS_MESSAGES.REDIS_SAVE_SUCCESS);
             } catch (redisError) {
                 return ERROR_MESSAGES.REDIS_SAVE_FAIL;
@@ -73,7 +72,7 @@ export default class UserService {
                     }
                     return user;
                 });
-                return redis.set('users', JSON.stringify(updatedUsers)).then(() => updatedUsers.find((user) => user.id === userId) || null);
+                return redisUtils.set('users', JSON.stringify(updatedUsers)).then(() => updatedUsers.find((user) => user.id === userId) || null);
             }
             return null;
         });
@@ -83,7 +82,7 @@ export default class UserService {
         return this.getUsers().then((users) => {
             if (users) {
                 const filteredUsers = users.filter((user) => user.id !== userId);
-                return redis.set('users', JSON.stringify(filteredUsers)).then(() => filteredUsers.length !== users.length)
+                return redisUtils.set('users', JSON.stringify(filteredUsers)).then(() => filteredUsers.length !== users.length)
             }
             return false
         })

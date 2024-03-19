@@ -1,7 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import userRoutes from './routes/userRoutes';
-import {logger} from '../src/logger/logger'
+import {logger} from './logger/logger'
 import { API_PORT_PATHS } from './config/constants';
 
 const app = express();
