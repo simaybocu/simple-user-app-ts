@@ -44,29 +44,29 @@ export const getUserById = (req : Request, res : Response) : void => {
     }
 }
 
-export const updateUser = (req : Request, res : Response) : void => {
-    const userId = parseInt(req.params.id, 10)
-    const updatedData = req.body;
-    const updatedUser = userService.updateUser(userId, updatedData)
+// export const updateUser = (req : Request, res : Response) : void => {
+//     const userId = parseInt(req.params.id, 10)
+//     const updatedData = req.body;
+//     const updatedUser = userService.updateUser(userId, updatedData)
 
-    if (updatedUser) {
-        res.json(updatedUser);
-    } else {
-        res.status(404).json({error: 'User not found'})
-    }
-}
+//     if (updatedUser) {
+//         res.json(updatedUser);
+//     } else {
+//         res.status(404).json({error: 'User not found'})
+//     }
+// }
 
-export const deleteUser = (req : Request, res : Response) : void => {
-    const userId = parseInt(req.params.id, 10);
+// export const deleteUser = (req : Request, res : Response) : void => {
+//     const userId = parseInt(req.params.id, 10);
 
-    userService.deleteUser(userId).then((success) => {
-        if (success) {
-            res.json({success: true});
-        } else {
-            res.status(404).json({error: 'User not found'});
-        }
-    }).catch((error) => {
-        console.error('Error deleting user:', error);
-        res.status(500).json({error: 'Internal server error'});
-    });
-};
+//     userService.deleteUser(userId).then((success) => {
+//         if (success) {
+//             res.json({success: true});
+//         } else {
+//             res.status(404).json({error: 'User not found'});
+//         }
+//     }).catch((error) => {
+//         console.error('Error deleting user:', error);
+//         res.status(500).json({error: 'Internal server error'});
+//     });
+// };

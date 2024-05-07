@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
-    "target": "es2020",                    /* Hedef ECMAScript sürümü */
+    "target": "es2016",                    /* Hedef ECMAScript sürümü */
     "module": "commonjs",                  /* Modül sistemini belirleme (commonjs, esnext, umd, etc.) */
-    "lib": ["es2015", "es2016", "es2017"], /* Kullanılabilir kütüphane tanımları */
+    "pretty": true,
+    "sourceMap": true,
     "esModuleInterop": true,                /* import/export uyumluluğunu sağlamak için */
     "skipLibCheck": true,                  /* İçe aktarılan kütüphaneleri kontrol etme (daha hızlı derleme için) */
     "forceConsistentCasingInFileNames": true, /* Dosya adlarında büyük/küçük harf duyarlılığını zorlama */
@@ -15,11 +16,26 @@
     "noFallthroughCasesInSwitch": true,   /* switch ifadelerinde düşme-through durumlarına karşı kontrol */
     "moduleResolution": "node",            /* Modül çözünürlüğü stratejisi (node, classic) */
     "baseUrl": "./",                       /* Kök dizin (relative paths için) */
-    "outDir": "./dist",                    /* Derlenmiş dosyaların çıkış dizini */
+    "outDir": "dist",                    /* Derlenmiş dosyaların çıkış dizini */
     "rootDir": "./src",                    /* Kaynak dosyaların bulunduğu dizin */
     "typeRoots": ["./node_modules/@types"], /* @types kütüphanelerinin bulunduğu dizinler */
   },
   "include": ["src/**/*.ts"],              /* Derlenmesi gereken dosyaların listesi (glob pattern kullanılabilir) */
-  "exclude": ["node_modules", "dist"],     /* Derlenmeyecek dosyaların listesi */
-  "compileOnSave": false                   /* Kaydedildiğinde otomatik derleme */
+  "exclude": ["node_modules", "dist", "coverage"],     /* Derlenmeyecek dosyaların listesi */
+  "compileOnSave": false ,                  /* Kaydedildiğinde otomatik derleme */
+  "lib": [
+    "es5",
+    "es6",
+    "dom",
+    "es2015.core",
+    "es2015.collection",
+    "es2015.generator",
+    "es2015.iterable",
+    "es2015.promise",
+    "es2015.proxy",
+    "es2015.reflect",
+    "es2015.symbol",
+    "es2015.symbol.wellknown",
+    "esnext.asynciterable"
+],
 }

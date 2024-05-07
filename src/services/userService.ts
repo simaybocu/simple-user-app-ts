@@ -1,7 +1,8 @@
 import User from '../models/user';
-import {redisUtils} from '../redis/redisUtils';
 import {ERROR_MESSAGES, SUCCESS_MESSAGES} from '../config/constants';
 import {logger} from '../logger/logger';
+import { getValue, setValue } from '../cache/query';
+import {Key} from '../cache/keys'
 
 
 export default class UserService {
@@ -10,7 +11,7 @@ export default class UserService {
     // Tüm kullanıcıları almak için
     async getUsers(): Promise < User[] > {
         try {
-            const usersData = await redisUtils.getCacheById('users'); //TODO: detaylı incelenecek acw'den
+            const usersData = await getValue(Key.USERS);
             return usersData ? JSON.parse(usersData) : [];
         } catch (error) {
             logger.error(`Error getting users: ${error}`);
@@ -22,6 +23,7 @@ export default class UserService {
     async addUser(user : User): Promise < {usernumber: number,user: User} | string > {
         try {
             const users = await this.getUsers();
+
             //TODO: users.length kontrol ettirilecek
             const existingUser = users.find(existingUser => existingUser.id === user.id); //find metodunda eşleşme olursa true döner, eşleşme bulunmazsa undefined döner
 
@@ -33,7 +35,7 @@ export default class UserService {
             const usernumber = users.length + 1;
 
             try { // TODO: redis işlemlerinde sadece son eklenen kullanıcıyı users dizisine kaydetmek istiyorum, redis string dışında değer set etmek için araştırma. Redis array araştırma
-                await redisUtils.set('users', JSON.stringify([...users, user])); // TODO: key kısmı için araştırma, iyileştirme
+                await  setValue(Key.USERS, JSON.stringify([...users, user])); // TODO: key kısmı için araştırma, iyileştirme
                 //TODO: set işleminden sonra expire kullanmak için araştırma
                 logger.info(SUCCESS_MESSAGES.REDIS_SAVE_SUCCESS);
             } catch (redisError) {
@@ -60,31 +62,31 @@ export default class UserService {
 
     // Belirli bir kullanıcı ID'sine sahip kullanıcının bilgilerini güncellemek için.
     // updatedData parametresi, güncellenmiş verilerin bir kısmını içerebilir.
-    updateUser(userId : number, updatedData : Partial < User >): Promise < User | null > {
-        return this.getUsers().then((users) => {
-            if (users) {
-                const updatedUsers = users.map((user) => {
-                    if (user.id === userId) {
-                        return {
-                            ...user,
-                            ...updatedData
-                        };
-                    }
-                    return user;
-                });
-                return redisUtils.set('users', JSON.stringify(updatedUsers)).then(() => updatedUsers.find((user) => user.id === userId) || null);
-            }
-            return null;
-        });
-    }
+    // updateUser(userId : number, updatedData : Partial < User >): Promise < User | null > {
+    //     return this.getUsers().then((users) => {
+    //         if (users) {
+    //             const updatedUsers = users.map((user) => {
+    //                 if (user.id === userId) {
+    //                     return {
+    //                         ...user,
+    //                         ...updatedData
+    //                     };
+    //                 }
+    //                 return user;
+    //             });
+    //             return setAsync('users', JSON.stringify(updatedUsers)).then(() => updatedUsers.find((user) => user.id === userId) || null);
+    //         }
+    //         return null;
+    //     });
+    // }
 
-    deleteUser(userId : number): Promise < boolean > {
-        return this.getUsers().then((users) => {
-            if (users) {
-                const filteredUsers = users.filter((user) => user.id !== userId);
-                return redisUtils.set('users', JSON.stringify(filteredUsers)).then(() => filteredUsers.length !== users.length)
-            }
-            return false
-        })
-    }
+    // deleteUser(userId : number): Promise < boolean > {
+    //     return this.getUsers().then((users) => {
+    //         if (users) {
+    //             const filteredUsers = users.filter((user) => user.id !== userId);
+    //             return setAsync('users', JSON.stringify(filteredUsers)).then(() => filteredUsers.length !== users.length)
+    //         }
+    //         return false
+    //     })
+    // }
 }
