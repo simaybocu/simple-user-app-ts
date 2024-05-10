@@ -1,4 +1,4 @@
-import User from '../models/user';
+import {User} from '../models/user';
 import {ERROR_MESSAGES, SUCCESS_MESSAGES} from '../config/constants';
 import {logger} from '../logger/logger';
 import { getValue, setValue } from '../cache/query';
@@ -8,10 +8,11 @@ import {Key} from '../cache/keys'
 export default class UserService {
     constructor() {}
 
-    // Tüm kullanıcıları almak için
-    async getUsers(): Promise < User[] > {
+    // Tüm kullanıcıları listeler
+    async getUsers(): Promise <User[]> {
         try {
             const usersData = await getValue(Key.USERS);
+            console.log("USERS DATA", usersData)
             return usersData ? JSON.parse(usersData) : [];
         } catch (error) {
             logger.error(`Error getting users: ${error}`);
@@ -20,13 +21,11 @@ export default class UserService {
     }
 
     // Yeni bir kullanıcı ekle
-    async addUser(user : User): Promise < {usernumber: number,user: User} | string > {
+    async addUser(user: User): Promise < {usernumber: number, user: User} | string > {
         try {
             const users = await this.getUsers();
 
-            //TODO: users.length kontrol ettirilecek
             const existingUser = users.find(existingUser => existingUser.id === user.id); //find metodunda eşleşme olursa true döner, eşleşme bulunmazsa undefined döner
-
             if (existingUser) { // Kullanıcı zaten varsa, bir hata mesajı döndür.
                 return ERROR_MESSAGES.USER_ALREADY_EXISTS
             }
@@ -41,7 +40,7 @@ export default class UserService {
             } catch (redisError) {
                 return ERROR_MESSAGES.REDIS_SAVE_FAIL;
             }
-            return {usernumber, user}
+            return {usernumber, user}  //TODO: array içinde birden fazla gönderildiyse onları ayrı data olarak sayması lazım
         } catch (error) {
             logger.error(`Error adding user: ${(error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR)}`);
             throw new Error('Adding user failed. Error: ' + (

@@ -4,6 +4,7 @@ export const ERROR_MESSAGES = {
     UNKNOWN_ERROR: 'Unknown Error',
     ERROR_OCC_ADD_USER: 'An error occurred while adding a user',
     REDIS_SAVE_FAIL: 'Redis save operation failed',
+    COULD_NOT_RETRIEVE_USERS: 'Could not retrieve users'
 };
 
 export const SUCCESS_MESSAGES = {
@@ -11,10 +12,15 @@ export const SUCCESS_MESSAGES = {
     USER_ADDED_SUCCESS: "User added succesfully!"
 }
 
+export const HTTP_STATUS = {
+    SUCCESS: 200,
+};
+
 export const API_PORT_PATHS = {
     APP_PORT: 3000,
     USERS_PATH: '/users',
-    ADD_USER_PATH: '/add/user'
+    ADD_USER_PATH: '/add/user',
+    EMPTY_PATH: '/'
 };
 
 export const CONSTANTS = {

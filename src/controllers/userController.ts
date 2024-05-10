@@ -1,13 +1,33 @@
 import {Request, Response} from 'express';
 import UserService from '../services/userService';
-import { ERROR_MESSAGES, CONSTANTS, SUCCESS_MESSAGES } from '../config/constants';
+import { ERROR_MESSAGES, CONSTANTS, SUCCESS_MESSAGES, HTTP_STATUS } from '../config/constants';
 import {logger} from '../logger/logger'
 
 const userService = new UserService();
 
-export const addUserEndpoint = async (req : Request, res : Response) : Promise < Response > => {
+export const getAllUsers = async (_req: Request, res: Response): Promise<void> => {
     try {
-        //TODO: body'de birden fazla kullanıcı gönderilebiliyor mu test
+        const users = await userService.getUsers();
+        const formattedUsers = [];
+        for (const user of users) {
+            if (Array.isArray(user)) {  //TODO: incelenecek
+                for (const individualUser of user) {
+                    formattedUsers.push({ id: individualUser.id, username: individualUser.username, email: individualUser.email });
+                }
+            } else {
+                formattedUsers.push({ id: user.id, username: user.username, email: user.email });
+            }
+        }
+        res.status(HTTP_STATUS.SUCCESS).json({ status: HTTP_STATUS.SUCCESS, data: formattedUsers }); //TODO: buraya data length eklenecek
+        logger.info(`Users successfully listed: ${JSON.stringify(formattedUsers)}`);
+    } catch (error) {
+        logger.error('Error getting all users:', error);
+        res.status(500).json({ error: ERROR_MESSAGES.COULD_NOT_RETRIEVE_USERS });
+    }
+};
+
+export const addUserEndpoint = async (req: Request, res: Response): Promise <Response> => {
+    try {
         const addUserResponse = await userService.addUser(req.body);
 
         if (typeof addUserResponse === CONSTANTS.STRING) {
@@ -19,17 +39,6 @@ export const addUserEndpoint = async (req : Request, res : Response) : Promise <
     } catch (err) {
         logger.error(`Error adding user: ${(err instanceof Error ? err.message : ERROR_MESSAGES.UNKNOWN_ERROR)}`);
         return res.status(500).json({status: 500, message: err instanceof Error ? err.message : ERROR_MESSAGES.UNKNOWN_ERROR});
-    }
-};
-
-
-export const getAllUsers = async (_req : Request, res : Response) : Promise < void > => {
-    try {
-        const users = await userService.getUsers();
-        res.json(users);
-    } catch (error) {
-        console.error('Error getting all users:', error);
-        res.status(500).json({error: 'Could not retrieve users'});
     }
 };
 
