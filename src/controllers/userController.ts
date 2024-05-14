@@ -10,7 +10,7 @@ export const getAllUsers = async (_req: Request, res: Response): Promise<void> =
         const users = await userService.getUsers();
         const formattedUsers = [];
         for (const user of users) {
-            if (Array.isArray(user)) {  //TODO: incelenecek
+            if (Array.isArray(user)) {  //user eğer bir array ise her kullanıcı ayrı ayrı listelemek için
                 for (const individualUser of user) {
                     formattedUsers.push({ id: individualUser.id, username: individualUser.username, email: individualUser.email });
                 }
@@ -18,7 +18,7 @@ export const getAllUsers = async (_req: Request, res: Response): Promise<void> =
                 formattedUsers.push({ id: user.id, username: user.username, email: user.email });
             }
         }
-        res.status(HTTP_STATUS.SUCCESS).json({ status: HTTP_STATUS.SUCCESS, data: formattedUsers }); //TODO: buraya data length eklenecek
+        res.status(HTTP_STATUS.SUCCESS).json({ status: HTTP_STATUS.SUCCESS, count: formattedUsers.length,  data: formattedUsers });
         logger.info(`Users successfully listed: ${JSON.stringify(formattedUsers)}`);
     } catch (error) {
         logger.error('Error getting all users:', error);

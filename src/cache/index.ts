@@ -19,3 +19,4 @@ process.on('SIGINT', async () => {
 })
 
 export default client;
+//TODO: uygulama kapanınca redis'in garip bir hatası geliyor bakılacak.

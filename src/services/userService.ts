@@ -1,7 +1,7 @@
 import {User} from '../models/user';
-import {ERROR_MESSAGES, SUCCESS_MESSAGES} from '../config/constants';
+import {CACHING, ERROR_MESSAGES, SUCCESS_MESSAGES} from '../config/constants';
 import {logger} from '../logger/logger';
-import { getValue, setValue } from '../cache/query';
+import { getValue, setJson, incr } from '../cache/query';
 import {Key} from '../cache/keys'
 
 
@@ -12,7 +12,6 @@ export default class UserService {
     async getUsers(): Promise <User[]> {
         try {
             const usersData = await getValue(Key.USERS);
-            console.log("USERS DATA", usersData)
             return usersData ? JSON.parse(usersData) : [];
         } catch (error) {
             logger.error(`Error getting users: ${error}`);
@@ -30,17 +29,15 @@ export default class UserService {
                 return ERROR_MESSAGES.USER_ALREADY_EXISTS
             }
 
-            //const usernumber = await redis.incr('usernumber');   // otomatik artan anahtar //TODO: Test edilecek, redis doc.u incelenecek bu özellik için
-            const usernumber = users.length + 1;
+            const usernumber = await incr(Key.USER_NUMBER);// otomatik artan anahtar
 
-            try { // TODO: redis işlemlerinde sadece son eklenen kullanıcıyı users dizisine kaydetmek istiyorum, redis string dışında değer set etmek için araştırma. Redis array araştırma
-                await  setValue(Key.USERS, JSON.stringify([...users, user])); // TODO: key kısmı için araştırma, iyileştirme
-                //TODO: set işleminden sonra expire kullanmak için araştırma
+            try { 
+                await setJson(Key.USERS, [...users, user] , CACHING.USERS_CACHE_DURATION); //TODO: cacheden bir gün sonra silinmesi lazım ms o şekilde upd edilecek.
                 logger.info(SUCCESS_MESSAGES.REDIS_SAVE_SUCCESS);
             } catch (redisError) {
                 return ERROR_MESSAGES.REDIS_SAVE_FAIL;
             }
-            return {usernumber, user}  //TODO: array içinde birden fazla gönderildiyse onları ayrı data olarak sayması lazım
+            return {usernumber, user}  //TODO: array içinde birden fazla gönderildiyse onları ayrı data olarak sayması lazım, test
         } catch (error) {
             logger.error(`Error adding user: ${(error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR)}`);
             throw new Error('Adding user failed. Error: ' + (

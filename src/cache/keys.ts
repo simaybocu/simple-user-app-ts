@@ -1,5 +1,6 @@
 export enum Key {
     USERS = 'users',
+    USER_NUMBER = "usernumber"
 }
 
 //TODO: bakılacak anlaşılmaya çalışılacak

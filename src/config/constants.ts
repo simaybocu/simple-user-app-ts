@@ -1,3 +1,4 @@
+//TODO: Constants std'larına bakılacak
 export const ERROR_MESSAGES = {
     USER_ALREADY_EXISTS: 'User with the same ID already exists.',
     USER_NOT_FOUND: 'User not found.',
@@ -26,3 +27,7 @@ export const API_PORT_PATHS = {
 export const CONSTANTS = {
     STRING: 'string'
 }
+
+export const CACHING = {
+    USERS_CACHE_DURATION: 10000,
+  };
