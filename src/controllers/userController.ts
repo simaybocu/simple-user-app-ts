@@ -1,6 +1,6 @@
 import {Request, Response} from 'express';
 import UserService from '../services/userService';
-import { ERROR_MESSAGES, CONSTANTS, SUCCESS_MESSAGES, HTTP_STATUS } from '../config/constants';
+import { ERROR_MESSAGES, SUCCESS_MESSAGES, HTTP_STATUS, CONSTANTS} from '../config/constants';
 import {logger} from '../logger/logger'
 
 const userService = new UserService();
@@ -25,20 +25,26 @@ export const getAllUsers = async (_req: Request, res: Response): Promise<void> =
         res.status(500).json({ error: ERROR_MESSAGES.COULD_NOT_RETRIEVE_USERS });
     }
 };
-
-export const addUserEndpoint = async (req: Request, res: Response): Promise <Response> => {
+export const addUserEndpoint = async (req: Request, res: Response): Promise<Response> => {
     try {
-        const addUserResponse = await userService.addUser(req.body);
+        const userData = req.body;
+
+        if (!Array.isArray(userData) && typeof userData !== 'object') {
+            return res.status(400).json({ status: 400, message: 'Geçersiz veri formatı. Bir kullanıcı nesnesi veya bir dizi kullanıcı nesnesi bekleniyor.' });
+        }
+
+        const addUserResponse = await userService.addUser(userData);
 
         if (typeof addUserResponse === CONSTANTS.STRING) {
             logger.warn(addUserResponse);
-            return res.status(400).json({status: 400, message: addUserResponse})  //TODO: Hata kodları errorStatus gibi bir sabitin içinden alınacak
+            return res.status(400).json({ status: 400, message: addUserResponse });
         }
+
         logger.info(SUCCESS_MESSAGES.USER_ADDED_SUCCESS);
-        return res.status(200).json({status: 200, data: addUserResponse})
+        return res.status(200).json({ status: 200, data: addUserResponse });
     } catch (err) {
         logger.error(`Error adding user: ${(err instanceof Error ? err.message : ERROR_MESSAGES.UNKNOWN_ERROR)}`);
-        return res.status(500).json({status: 500, message: err instanceof Error ? err.message : ERROR_MESSAGES.UNKNOWN_ERROR});
+        return res.status(500).json({ status: 500, message: err instanceof Error ? err.message : ERROR_MESSAGES.UNKNOWN_ERROR });
     }
 };
 

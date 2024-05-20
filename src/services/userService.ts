@@ -1,7 +1,7 @@
 import {User} from '../models/user';
 import {CACHING, ERROR_MESSAGES, SUCCESS_MESSAGES} from '../config/constants';
 import {logger} from '../logger/logger';
-import { getValue, setJson, incr } from '../cache/query';
+import { getValue, setJson } from '../cache/query';
 import {Key} from '../cache/keys'
 
 
@@ -19,30 +19,31 @@ export default class UserService {
         }
     }
 
-    // Yeni bir kullanıcı ekle
-    async addUser(user: User): Promise < {usernumber: number, user: User} | string > {
+    async addUser(user: User | User[]): Promise<{ usernumber: number, user: User | User[] } | string> {
         try {
             const users = await this.getUsers();
-
-            const existingUser = users.find(existingUser => existingUser.id === user.id); //find metodunda eşleşme olursa true döner, eşleşme bulunmazsa undefined döner
-            if (existingUser) { // Kullanıcı zaten varsa, bir hata mesajı döndür.
-                return ERROR_MESSAGES.USER_ALREADY_EXISTS
+            const userList = Array.isArray(user) ? user : [user];
+    
+            const existingUsers = userList.filter(newUser => users.find(existingUser => existingUser.id === newUser.id)); //find metodunda eşleşme olursa true döner, eşleşme bulunmazsa undefined döner
+            if (existingUsers.length > 0) {  // Kullanıcı zaten varsa, bir hata mesajı döndür.
+                return ERROR_MESSAGES.USER_ALREADY_EXISTS;
             }
-
-            const usernumber = await incr(Key.USER_NUMBER);// otomatik artan anahtar
-
-            try { 
-                await setJson(Key.USERS, [...users, user] , CACHING.USERS_CACHE_DURATION); //TODO: cacheden bir gün sonra silinmesi lazım ms o şekilde upd edilecek.
+    
+            const newUsersCount = userList.length;
+           // const totalUsersCount = users.length + newUsersCount;
+    
+            try {
+                const updatedUsers = [...users, ...userList];
+                await setJson(Key.USERS, updatedUsers, CACHING.USERS_CACHE_DURATION);
                 logger.info(SUCCESS_MESSAGES.REDIS_SAVE_SUCCESS);
             } catch (redisError) {
                 return ERROR_MESSAGES.REDIS_SAVE_FAIL;
             }
-            return {usernumber, user}  //TODO: array içinde birden fazla gönderildiyse onları ayrı data olarak sayması lazım, test
+    
+            return { usernumber: newUsersCount, user: userList };
         } catch (error) {
             logger.error(`Error adding user: ${(error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR)}`);
-            throw new Error('Adding user failed. Error: ' + (
-            error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR
-        ));
+            throw new Error('Adding user failed. Error: ' + (error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR));
         }
     }
 

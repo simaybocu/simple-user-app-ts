@@ -29,5 +29,5 @@ export const CONSTANTS = {
 }
 
 export const CACHING = {
-    USERS_CACHE_DURATION: 10000,
+    USERS_CACHE_DURATION: 86400000, //ms cinsinden bir gün sonra
   };
