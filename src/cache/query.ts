@@ -51,4 +51,4 @@ export async function incr(key: Key | DynamicKeyType) {
 export async function incrBy(key: Key | DynamicKeyType, increment: number) {
   return cache.incrBy(key, increment);
 }
-//TODO: diğer list ve json fonksiyonlarına da bakılacak
+//diğer gerekli redi fonksiyonu buraya eklenebilir..

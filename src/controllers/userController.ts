@@ -1,23 +1,17 @@
 import {Request, Response} from 'express';
 import UserService from '../services/userService';
-import { ERROR_MESSAGES, SUCCESS_MESSAGES, HTTP_STATUS, CONSTANTS} from '../config/constants';
-import {logger} from '../logger/logger'
+import { ERROR_MESSAGES, SUCCESS_MESSAGES, HTTP_STATUS, DATA_TYPE} from '../config/constants';
+import {logger} from '../logger/logger';
+import {User} from '../models/user';
 
-const userService = new UserService();
+const userService = new UserService(); //userService classını fonksiyonlarını kullanabilmek için class'ı çağır
 
 export const getAllUsers = async (_req: Request, res: Response): Promise<void> => {
     try {
         const users = await userService.getUsers();
-        const formattedUsers = [];
-        for (const user of users) {
-            if (Array.isArray(user)) {  //user eğer bir array ise her kullanıcı ayrı ayrı listelemek için
-                for (const individualUser of user) {
-                    formattedUsers.push({ id: individualUser.id, username: individualUser.username, email: individualUser.email });
-                }
-            } else {
-                formattedUsers.push({ id: user.id, username: user.username, email: user.email });
-            }
-        }
+        
+        //user eğer bir array ise her kullanıcı ayrı ayrı listelemek için
+        const formattedUsers: User[] = users.flatMap(user => Array.isArray(user) ? user : [user]); //flatMap, her öğe üzerinde bir dönüşüm işlemi gerçekleştirir ve sonuçları tek bir düz liste olarak birleştirir.
         res.status(HTTP_STATUS.SUCCESS).json({ status: HTTP_STATUS.SUCCESS, count: formattedUsers.length,  data: formattedUsers });
         logger.info(`Users successfully listed: ${JSON.stringify(formattedUsers)}`);
     } catch (error) {
@@ -25,17 +19,19 @@ export const getAllUsers = async (_req: Request, res: Response): Promise<void> =
         res.status(500).json({ error: ERROR_MESSAGES.COULD_NOT_RETRIEVE_USERS });
     }
 };
+
 export const addUserEndpoint = async (req: Request, res: Response): Promise<Response> => {
     try {
         const userData = req.body;
 
-        if (!Array.isArray(userData) && typeof userData !== 'object') {
-            return res.status(400).json({ status: 400, message: 'Geçersiz veri formatı. Bir kullanıcı nesnesi veya bir dizi kullanıcı nesnesi bekleniyor.' });
+        //tek bir kullanıcı veya kullanıcı dizisi bekler
+        if (!Array.isArray(userData) && typeof userData !== DATA_TYPE.OBJECT) {
+            return res.status(400).json({ status: 400, message: ERROR_MESSAGES.INVALID_DATA_FORMAT_FOR_ADD_USER});
         }
 
         const addUserResponse = await userService.addUser(userData);
 
-        if (typeof addUserResponse === CONSTANTS.STRING) {
+        if (typeof addUserResponse === DATA_TYPE.STRING) {
             logger.warn(addUserResponse);
             return res.status(400).json({ status: 400, message: addUserResponse });
         }

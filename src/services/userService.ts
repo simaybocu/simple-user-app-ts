@@ -9,9 +9,9 @@ export default class UserService {
     constructor() {}
 
     // Tüm kullanıcıları listeler
-    async getUsers(): Promise <User[]> {
+    async getUsers():Promise <User[]> {
         try {
-            const usersData = await getValue(Key.USERS);
+            const usersData = await getValue(Key.USERS); //redisten USERS key'i altındaki tüm kullanıcıları alır
             return usersData ? JSON.parse(usersData) : [];
         } catch (error) {
             logger.error(`Error getting users: ${error}`);
@@ -19,28 +19,27 @@ export default class UserService {
         }
     }
 
-    async addUser(user: User | User[]): Promise<{ usernumber: number, user: User | User[] } | string> {
+    async addUser(user: User | User[]): Promise<{ usercount: number, users: User[] } | string> {
         try {
             const users = await this.getUsers();
-            const userList = Array.isArray(user) ? user : [user];
+            const userList = Array.isArray(user) ? user : [user]; // eğer user dizi ise direkt user'ı kullanır değilse user'ı bir dizi içerisine alır. Ki tek bir formata göre işlem yapmak için
     
-            const existingUsers = userList.filter(newUser => users.find(existingUser => existingUser.id === newUser.id)); //find metodunda eşleşme olursa true döner, eşleşme bulunmazsa undefined döner
+            const existingUsers = userList.filter(newUser => users.find(existingUser => existingUser.id === newUser.id)); //find metodunda eşleşme olursa true döner, eşleşme bulunmazsa undefined döner, filter methodu bir dizi döndürür
             if (existingUsers.length > 0) {  // Kullanıcı zaten varsa, bir hata mesajı döndür.
                 return ERROR_MESSAGES.USER_ALREADY_EXISTS;
             }
     
             const newUsersCount = userList.length;
-           // const totalUsersCount = users.length + newUsersCount;
+            //const totalUsersCount = users.length + newUsersCount; // mevcutta toplam tüm kullanıcı sayısı
     
             try {
-                const updatedUsers = [...users, ...userList];
+                const updatedUsers = [...users, ...userList]; //users ve userList birleştirerek yeni bir dizi oluşturur çünkü eklenen tüm kullanıcıları redis'e kaydetmek için
                 await setJson(Key.USERS, updatedUsers, CACHING.USERS_CACHE_DURATION);
                 logger.info(SUCCESS_MESSAGES.REDIS_SAVE_SUCCESS);
             } catch (redisError) {
                 return ERROR_MESSAGES.REDIS_SAVE_FAIL;
             }
-    
-            return { usernumber: newUsersCount, user: userList };
+            return { usercount: newUsersCount, users: userList };
         } catch (error) {
             logger.error(`Error adding user: ${(error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR)}`);
             throw new Error('Adding user failed. Error: ' + (error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR));

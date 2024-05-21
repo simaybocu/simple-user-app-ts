@@ -5,11 +5,10 @@ import {logger} from './logger/logger'
 import { API_PORT_PATHS } from './config/constants';
 
 const app = express();
-const port = API_PORT_PATHS.APP_PORT;
 
-app.use(bodyParser.json());
+app.use(bodyParser.json()); //bu middleware, gelen isteklerdeki JSON verilerini analiz etmek için kullanılır.
 app.use(API_PORT_PATHS.USERS_PATH, userRoutes)
 
-app.listen(port, () => {
-  logger.info(`Server is listening at http://localhost:${port}`);
+app.listen(API_PORT_PATHS.APP_PORT, () => {
+  logger.info(`Server is listening at ${API_PORT_PATHS.APP_PORT}`);
 })

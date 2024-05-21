@@ -3,7 +3,6 @@ export enum Key {
     USER_NUMBER = "usernumber"
 }
 
-//TODO: bakılacak anlaşılmaya çalışılacak
 export enum DynamicKey {
     BLOGS_SIMILAR = 'BLOGS_SIMILAR',
     BLOG = 'BLOG',

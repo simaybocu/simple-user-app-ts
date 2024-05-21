@@ -5,7 +5,8 @@ export const ERROR_MESSAGES = {
     UNKNOWN_ERROR: 'Unknown Error',
     ERROR_OCC_ADD_USER: 'An error occurred while adding a user',
     REDIS_SAVE_FAIL: 'Redis save operation failed',
-    COULD_NOT_RETRIEVE_USERS: 'Could not retrieve users'
+    COULD_NOT_RETRIEVE_USERS: 'Could not retrieve users',
+    INVALID_DATA_FORMAT_FOR_ADD_USER: 'Invalid data format. Expecting a user object or a sequence of user objects.'
 };
 
 export const SUCCESS_MESSAGES = {
@@ -25,7 +26,12 @@ export const API_PORT_PATHS = {
 };
 
 export const CONSTANTS = {
-    STRING: 'string'
+    
+}
+
+export const DATA_TYPE = {
+    STRING: 'string',
+    OBJECT: 'object'
 }
 
 export const CACHING = {
