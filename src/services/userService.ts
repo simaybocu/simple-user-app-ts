@@ -47,13 +47,15 @@ export default class UserService {
     }
 
     // Belirli bir kullanıcı ID'sine sahip kullanıcıyı almak için
-    getUserById(userId : number): Promise < User | null > {
-        return this.getUsers().then((users) => {
-            if (users) {
-                return users.find((user) => user.id === userId) || null;
-            }
-            return null;
-        })
+    async getUserById(userId: number): Promise<User | null> {
+        try {
+            const users = await this.getUsers();
+            const user = users.find((user) => user.id === userId) || null;
+            return user;
+        } catch (error) {
+            logger.error(`Error getting user by ID: ${error}`);
+            throw error;
+        }
     }
 
     // Belirli bir kullanıcı ID'sine sahip kullanıcının bilgilerini güncellemek için.
