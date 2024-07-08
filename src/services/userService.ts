@@ -1,7 +1,7 @@
 import {User} from '../models/user';
 import {CACHING, ERROR_MESSAGES, SUCCESS_MESSAGES} from '../config/constants';
 import {logger} from '../logger/logger';
-import { getValue, setJson } from '../cache/query';
+import { getValue, setJson, delByKey } from '../cache/query';
 import {Key} from '../cache/keys'
 
 
@@ -60,31 +60,65 @@ export default class UserService {
 
     // Belirli bir kullanıcı ID'sine sahip kullanıcının bilgilerini güncellemek için.
     // updatedData parametresi, güncellenmiş verilerin bir kısmını içerebilir.
-    // updateUser(userId : number, updatedData : Partial < User >): Promise < User | null > {
-    //     return this.getUsers().then((users) => {
-    //         if (users) {
-    //             const updatedUsers = users.map((user) => {
-    //                 if (user.id === userId) {
-    //                     return {
-    //                         ...user,
-    //                         ...updatedData
-    //                     };
-    //                 }
-    //                 return user;
-    //             });
-    //             return setAsync('users', JSON.stringify(updatedUsers)).then(() => updatedUsers.find((user) => user.id === userId) || null);
-    //         }
-    //         return null;
-    //     });
-    // }
-
-    // deleteUser(userId : number): Promise < boolean > {
-    //     return this.getUsers().then((users) => {
-    //         if (users) {
-    //             const filteredUsers = users.filter((user) => user.id !== userId);
-    //             return setAsync('users', JSON.stringify(filteredUsers)).then(() => filteredUsers.length !== users.length)
-    //         }
-    //         return false
-    //     })
-    // }
+    async updateUser(userId: number, updatedData: Partial<User>): Promise<User | string> {
+        try {
+            const users = await this.getUsers();
+            if (users) {
+                const updatedUsers = users.map(user => {
+                    if (user.id === userId) {
+                        return { ...user, ...updatedData };
+                    }
+                    return user;
+                });
+    
+                const userToUpdate = updatedUsers.find(user => user.id === userId);
+                if (!userToUpdate) {
+                    return ERROR_MESSAGES.USER_NOT_FOUND;
+                }
+    
+                try {
+                    await setJson(Key.USERS, updatedUsers, CACHING.USERS_CACHE_DURATION);
+                    logger.info(SUCCESS_MESSAGES.REDIS_SAVE_SUCCESS);
+                } catch (redisError) {
+                    return ERROR_MESSAGES.REDIS_SAVE_FAIL; // Redis kaydetme hatası
+                }
+    
+                return userToUpdate; // Başarılı olduğunda güncellenmiş kullanıcıyı döndür
+            }
+            return ERROR_MESSAGES.USER_NOT_FOUND; // Kullanıcılar alınamazsa hata mesajı döndür
+        } catch (error) {
+            logger.error(`Error updating user: ${(error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR)}`);
+            throw new Error('Updating user failed. Error: ' + (error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR));
+        }
+    }
+    
+    async deleteUser(userId: number): Promise<boolean | string> {
+        try {
+            const users = await this.getUsers();
+            if (users) {
+                const filteredUsers = users.filter(user => user.id !== userId);
+    
+                if (filteredUsers.length === users.length) {
+                    return ERROR_MESSAGES.USER_NOT_FOUND;
+                }
+    
+                try {
+                    // Silinen kullanıcıyı Redis'ten kaldır
+                    await delByKey(`user:${userId}`);
+                    // Redis'teki güncellenmiş kullanıcılar listesini kaydet
+                    await setJson(Key.USERS, filteredUsers, CACHING.USERS_CACHE_DURATION);
+                    logger.info(SUCCESS_MESSAGES.REDIS_SAVE_SUCCESS);
+                } catch (redisError) {
+                    console.error('Error saving to Redis:', redisError);
+                    return ERROR_MESSAGES.REDIS_SAVE_FAIL; // Redis kaydetme hatası
+                }
+    
+                return true;
+            }
+            return ERROR_MESSAGES.USER_NOT_FOUND;
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            return ERROR_MESSAGES.UNKNOWN_ERROR;
+        }
+    }
 }

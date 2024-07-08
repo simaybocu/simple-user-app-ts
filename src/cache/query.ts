@@ -36,7 +36,7 @@ export async function getValue(key: Key | DynamicKeyType) {
   return cache.get(key);
 }
 
-export async function delByKey(key: Key | DynamicKeyType) {
+export async function delByKey(key: string): Promise<number> { // Burada key türü string olmalı
   return cache.del(key);
 }
 

@@ -62,29 +62,56 @@ export const getUserByIdEndpoint = async (req: Request, res: Response): Promise<
     }
 };
 
-// export const updateUser = (req : Request, res : Response) : void => {
-//     const userId = parseInt(req.params.id, 10)
-//     const updatedData = req.body;
-//     const updatedUser = userService.updateUser(userId, updatedData)
+export const updateUser = async (req: Request, res: Response): Promise<Response> => {
+    const userId = parseInt(req.params.id, 10);
+    const updatedData = req.body;
 
-//     if (updatedUser) {
-//         res.json(updatedUser);
-//     } else {
-//         res.status(404).json({error: 'User not found'})
-//     }
-// }
+    try {
+        const updateUserResponse = await userService.updateUser(userId, updatedData);
+        let statusCode = 200;
 
-// export const deleteUser = (req : Request, res : Response) : void => {
-//     const userId = parseInt(req.params.id, 10);
+        if (typeof updateUserResponse === 'string') {
+            statusCode = updateUserResponse === ERROR_MESSAGES.USER_NOT_FOUND ? 404 : 500;
+        }
 
-//     userService.deleteUser(userId).then((success) => {
-//         if (success) {
-//             res.json({success: true});
-//         } else {
-//             res.status(404).json({error: 'User not found'});
-//         }
-//     }).catch((error) => {
-//         console.error('Error deleting user:', error);
-//         res.status(500).json({error: 'Internal server error'});
-//     });
-// };
+        return res.status(statusCode).json({
+            status: statusCode,
+            data: typeof updateUserResponse === 'string' ? null : updateUserResponse,
+            message: typeof updateUserResponse === 'string' ? updateUserResponse : 'User updated successfully'
+        });
+    } catch (err) {
+        logger.error(`Error updating user: ${err}`);
+        return res.status(500).json({
+            status: 500,
+            message: 'Internal Server Error'
+        });
+    }
+};
+
+
+export const deleteUser = async (req: Request, res: Response): Promise<Response> => {
+    const userId = parseInt(req.params.id, 10);
+
+    try {
+        const deleteUserResponse = await userService.deleteUser(userId);
+        let statusCode = 200; // Varsayılan başarılı durum kodu
+
+        if (typeof deleteUserResponse === 'string') {
+            statusCode = deleteUserResponse === ERROR_MESSAGES.USER_NOT_FOUND ? 404 : 500;
+        }
+
+        return res.status(statusCode).json({
+            status: statusCode,
+            success: typeof deleteUserResponse === 'boolean' ? deleteUserResponse : false,
+            message: typeof deleteUserResponse === 'string' ? deleteUserResponse : 'User deleted successfully'
+        });
+    } catch (err) {
+        logger.error(`Error deleting user: ${err}`);
+        return res.status(500).json({
+            status: 500,
+            message: 'Internal Server Error'
+        });
+    }
+};
+
+

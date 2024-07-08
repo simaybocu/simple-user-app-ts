@@ -26,7 +26,7 @@ export const API_PORT_PATHS = {
     APP_PORT: 3000,
     USERS_PATH: '/users',
     ADD_USER_PATH: '/add/user',
-    GET_USER_W_ID: '/:id',
+    USER_W_ID: '/:id',
     EMPTY_PATH: '/'
 };
 
