@@ -8,32 +8,43 @@ import {Key} from '../cache/keys'
 export default class UserService {
     constructor() {}
 
-    // Tüm kullanıcıları listeler
+    /**
+     * Retrieves all users from the Redis cache.
+     * 
+     * @returns {Promise<User[]>} - An array of User objects.
+     * @throws {Error} - If retrieval fails.
+     */
     async getUsers():Promise <User[]> {
         try {
-            const usersData = await getValue(Key.USERS); //redisten USERS key'i altındaki tüm kullanıcıları alır
+            const usersData = await getValue(Key.USERS); // Retrieve all users under the USERS key in Redis
             return usersData ? JSON.parse(usersData) : [];
         } catch (error) {
-            logger.error(`Error getting users: ${error}`);
-            throw error;
+            logger.error(`Error getting users: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new Error(ERROR_MESSAGES.COULD_NOT_RETRIEVE_USERS);
         }
     }
 
+    /**
+     * Service function to add a user or a list of users.
+     * @param user - Single user object or an array of users.
+     * @returns Result of the add operation: number of new users and the list of new users, or an error message.
+     */
     async addUser(user: User | User[]): Promise<{ usercount: number, users: User[] } | string> {
         try {
             const users = await this.getUsers();
-            const userList = Array.isArray(user) ? user : [user]; // eğer user dizi ise direkt user'ı kullanır değilse user'ı bir dizi içerisine alır. Ki tek bir formata göre işlem yapmak için
+            const userList = Array.isArray(user) ? user : [user]; // Use user directly if it is an array, otherwise wrap it in an array for uniform processing
     
-            const existingUsers = userList.filter(newUser => users.find(existingUser => existingUser.id === newUser.id)); //find metodunda eşleşme olursa true döner, eşleşme bulunmazsa undefined döner, filter methodu bir dizi döndürür
-            if (existingUsers.length > 0) {  // Kullanıcı zaten varsa, bir hata mesajı döndür.
+            // Filter for existing users by matching IDs
+            const existingUsers = userList.filter(newUser => users.find(existingUser => existingUser.id === newUser.id));
+            if (existingUsers.length > 0) {
                 return ERROR_MESSAGES.USER_ALREADY_EXISTS;
             }
     
             const newUsersCount = userList.length;
-            //const totalUsersCount = users.length + newUsersCount; // mevcutta toplam tüm kullanıcı sayısı
     
             try {
-                const updatedUsers = [...users, ...userList]; //users ve userList birleştirerek yeni bir dizi oluşturur çünkü eklenen tüm kullanıcıları redis'e kaydetmek için
+                // Combine users and userList to form a new array for saving to Redis
+                const updatedUsers = [...users, ...userList];
                 await setJson(Key.USERS, updatedUsers, CACHING.USERS_CACHE_DURATION);
                 logger.info(SUCCESS_MESSAGES.REDIS_SAVE_SUCCESS);
             } catch (redisError) {

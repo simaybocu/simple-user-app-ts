@@ -4,40 +4,74 @@ import { ERROR_MESSAGES, SUCCESS_MESSAGES, HTTP_STATUS, DATA_TYPE} from '../conf
 import {logger} from '../logger/logger';
 import {User} from '../models/user';
 
-const userService = new UserService(); //userService classını fonksiyonlarını kullanabilmek için class'ı çağır
+const userService = new UserService();
 
-export const getUsersEndpoint = async (_req: Request, res: Response): Promise<Response> => {
+/**
+ * Handles the request to retrieve all users.
+ * 
+ * @param {Request} _req - The Express request object (not used).
+ * @param {Response} res - The Express response object.
+ * @returns {Promise<Response>} - The response with status and user data or error message.
+ */
+export const getUsers = async (_req: Request, res: Response): Promise<Response> => {
     try {
         const users = await userService.getUsers();
-        
-        //user eğer bir array ise her kullanıcı ayrı ayrı listelemek için
-        const formattedUsers: User[] = users.flatMap(user => Array.isArray(user) ? user : [user]); //flatMap, her öğe üzerinde bir dönüşüm işlemi gerçekleştirir ve sonuçları tek bir düz liste olarak birleştirir.
+        if (users.length === 0) {
+            logger.warn(ERROR_MESSAGES.NO_USERS_FOUND);
+            return res.status(HTTP_STATUS.NOT_FOUND).json({
+                status: HTTP_STATUS.NOT_FOUND,
+                message: ERROR_MESSAGES.NO_USERS_FOUND
+            });
+        }
+        // If the user is an array, list each user separately
+        const formattedUsers: User[] = users.flatMap(user => Array.isArray(user) ? user : [user]);  // flatMap applies a transformation to each element and combines the results into a single flat list.
         logger.info(`Users successfully listed: ${JSON.stringify(formattedUsers)}`);
-        return res.status(HTTP_STATUS.SUCCESS).json({ status: HTTP_STATUS.SUCCESS, count: formattedUsers.length,  data: formattedUsers });
-        //TODO: buraya 200 dışında eğer kullanıcı dönmezse 404 not found şeklinde response ekle veya diğer hata kontrolleri eklenecek
+
+        return res.status(HTTP_STATUS.SUCCESS).json({
+            status: HTTP_STATUS.SUCCESS,
+            count: formattedUsers.length,
+            data: formattedUsers
+        });
     } catch (error) {
         logger.error('Error getting all users:', error);
-        return res.status(HTTP_STATUS.SERVER_ERROR).json({status: HTTP_STATUS.SERVER_ERROR, error: ERROR_MESSAGES.COULD_NOT_RETRIEVE_USERS });
+        return res.status(HTTP_STATUS.SERVER_ERROR).json({
+            status: HTTP_STATUS.SERVER_ERROR,
+            message: ERROR_MESSAGES.COULD_NOT_RETRIEVE_USERS
+        })
     }
 };
 
-export const addUserEndpoint = async (req: Request, res: Response): Promise<Response> => {
+/**
+ * Endpoint to add a user or a list of users.
+ * @param req - Express request object.
+ * @param res - Express response object.
+ * @returns Response with the status and result of the add operation.
+ */
+export const addUser = async (req: Request, res: Response): Promise<Response> => {
     try {
         const userData = req.body;
-
-        //tek bir kullanıcı veya kullanıcı dizisi bekler
+        
+        // Expecting either a single user object or an array of users
         if (!Array.isArray(userData) && typeof userData !== DATA_TYPE.OBJECT) {
-            return res.status(HTTP_STATUS.BAD_REQUEST).json({ status: HTTP_STATUS.BAD_REQUEST, message: ERROR_MESSAGES.INVALID_DATA_FORMAT_FOR_ADD_USER});
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+                status: HTTP_STATUS.BAD_REQUEST, 
+                message: ERROR_MESSAGES.INVALID_DATA_FORMAT_FOR_ADD_USER 
+            });
         }
 
         const addUserResponse = await userService.addUser(userData);
         if (typeof addUserResponse === DATA_TYPE.STRING) {
             logger.warn(addUserResponse);
-            return res.status(HTTP_STATUS.BAD_REQUEST).json({ status: HTTP_STATUS.BAD_REQUEST, message: addUserResponse });
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+                status: HTTP_STATUS.BAD_REQUEST, 
+                message: addUserResponse 
+            });
         }
-
         logger.info(SUCCESS_MESSAGES.USER_ADDED_SUCCESS);
-        return res.status(HTTP_STATUS.SUCCESS).json({ status: HTTP_STATUS.SUCCESS, data: addUserResponse });
+        return res.status(HTTP_STATUS.SUCCESS).json({ 
+            status: HTTP_STATUS.SUCCESS, 
+            data: addUserResponse 
+        });
     } catch (err) {
         logger.error(`Error adding user: ${(err instanceof Error ? err.message : ERROR_MESSAGES.UNKNOWN_ERROR)}`);
         return res.status(HTTP_STATUS.SERVER_ERROR).json({ status: HTTP_STATUS.SERVER_ERROR, message: err instanceof Error ? err.message : ERROR_MESSAGES.UNKNOWN_ERROR });

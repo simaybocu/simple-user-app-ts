@@ -7,7 +7,8 @@ export const ERROR_MESSAGES = {
     REDIS_SAVE_FAIL: 'Redis save operation failed',
     COULD_NOT_RETRIEVE_USERS: 'Could not retrieve users',
     INVALID_DATA_FORMAT_FOR_ADD_USER: 'Invalid data format. Expecting a user object or a sequence of user objects.',
-    COULD_NOT_RETRIEVE_USER: 'Could not retrieve user with this id'
+    COULD_NOT_RETRIEVE_USER: 'Could not retrieve user with this id',
+    NO_USERS_FOUND: 'No users found'
 };
 
 export const SUCCESS_MESSAGES = {
