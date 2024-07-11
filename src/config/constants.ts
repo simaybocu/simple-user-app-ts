@@ -8,12 +8,15 @@ export const ERROR_MESSAGES = {
     COULD_NOT_RETRIEVE_USERS: 'Could not retrieve users',
     INVALID_DATA_FORMAT_FOR_ADD_USER: 'Invalid data format. Expecting a user object or a sequence of user objects.',
     COULD_NOT_RETRIEVE_USER: 'Could not retrieve user with this id',
-    NO_USERS_FOUND: 'No users found'
+    NO_USERS_FOUND: 'No users found',
+    INTERNAL_SERVER_ERROR: 'Internal Server Error'
 };
 
 export const SUCCESS_MESSAGES = {
     REDIS_SAVE_SUCCESS: 'Redis save operation successful!',
-    USER_ADDED_SUCCESS: "User added succesfully!"
+    USER_ADDED_SUCCESS: "User added succesfully!",
+    USER_UPDATED_SUCCESS: 'User updated successfully!',
+    USER_DELETED_SUCCESS: 'User deleted successfully!'
 }
 
 export const HTTP_STATUS = {
@@ -37,7 +40,8 @@ export const CONSTANTS = {
 
 export const DATA_TYPE = {
     STRING: 'string',
-    OBJECT: 'object'
+    OBJECT: 'object',
+    BOOLEAN: 'boolean'
 }
 
 export const CACHING = {

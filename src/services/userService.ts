@@ -57,7 +57,11 @@ export default class UserService {
         }
     }
 
-    // Belirli bir kullanıcı ID'sine sahip kullanıcıyı almak için
+    /**
+     * Service function to get a user by ID.
+     * @param userId - The ID of the user to retrieve.
+     * @returns The user object if found, or null if not found.
+     */
     async getUserById(userId: number): Promise<User | null> {
         try {
             const users = await this.getUsers();
@@ -69,12 +73,19 @@ export default class UserService {
         }
     }
 
-    // Belirli bir kullanıcı ID'sine sahip kullanıcının bilgilerini güncellemek için.
-    // updatedData parametresi, güncellenmiş verilerin bir kısmını içerebilir.
+    /**
+     * Service function to update a user's information.
+     * @param userId - The ID of the user to update.
+     * @param updatedData - The new data to update the user with.
+     * @returns The updated user object if successful, or an error message if not.
+     */
     async updateUser(userId: number, updatedData: Partial<User>): Promise<User | string> {
         try {
             const users = await this.getUsers();
             if (users) {
+                // Map through the users array and update the user with the matching ID.
+                // If the user's ID matches userId, merge the updatedData into the user object.
+                // Otherwise, return the user object unchanged.
                 const updatedUsers = users.map(user => {
                     if (user.id === userId) {
                         return { ...user, ...updatedData };
@@ -91,22 +102,28 @@ export default class UserService {
                     await setJson(Key.USERS, updatedUsers, CACHING.USERS_CACHE_DURATION);
                     logger.info(SUCCESS_MESSAGES.REDIS_SAVE_SUCCESS);
                 } catch (redisError) {
-                    return ERROR_MESSAGES.REDIS_SAVE_FAIL; // Redis kaydetme hatası
+                    return ERROR_MESSAGES.REDIS_SAVE_FAIL; // Redis save error
                 }
     
-                return userToUpdate; // Başarılı olduğunda güncellenmiş kullanıcıyı döndür
+                return userToUpdate; // Return updated user if successful
             }
-            return ERROR_MESSAGES.USER_NOT_FOUND; // Kullanıcılar alınamazsa hata mesajı döndür
+            return ERROR_MESSAGES.USER_NOT_FOUND; // Return error if users could not be retrieved
         } catch (error) {
             logger.error(`Error updating user: ${(error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR)}`);
             throw new Error('Updating user failed. Error: ' + (error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR));
         }
     }
     
+    /**
+     * Service function to delete a user by ID.
+     * @param userId - The ID of the user to delete.
+     * @returns A boolean indicating success, or an error message if not.
+     */
     async deleteUser(userId: number): Promise<boolean | string> {
         try {
             const users = await this.getUsers();
             if (users) {
+                // Filter out the user to be deleted
                 const filteredUsers = users.filter(user => user.id !== userId);
     
                 if (filteredUsers.length === users.length) {
@@ -114,21 +131,21 @@ export default class UserService {
                 }
     
                 try {
-                    // Silinen kullanıcıyı Redis'ten kaldır
+                    // Remove the deleted user from Redis
                     await delByKey(`user:${userId}`);
-                    // Redis'teki güncellenmiş kullanıcılar listesini kaydet
+                    // Save the updated users list to Redis
                     await setJson(Key.USERS, filteredUsers, CACHING.USERS_CACHE_DURATION);
                     logger.info(SUCCESS_MESSAGES.REDIS_SAVE_SUCCESS);
                 } catch (redisError) {
-                    console.error('Error saving to Redis:', redisError);
-                    return ERROR_MESSAGES.REDIS_SAVE_FAIL; // Redis kaydetme hatası
+                    logger.error(`Error saving to Redis: ${redisError}`);
+                    return ERROR_MESSAGES.REDIS_SAVE_FAIL; // Redis save error
                 }
     
                 return true;
             }
             return ERROR_MESSAGES.USER_NOT_FOUND;
         } catch (error) {
-            console.error('Error deleting user:', error);
+            logger.error(`Error deleting user: ${error}`);
             return ERROR_MESSAGES.UNKNOWN_ERROR;
         }
     }

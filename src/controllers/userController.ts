@@ -78,9 +78,15 @@ export const addUser = async (req: Request, res: Response): Promise<Response> =>
     }
 };
 
-export const getUserByIdEndpoint = async (req: Request, res: Response): Promise<Response> => {
+/**
+ * Endpoint to get a user by ID.
+ * @param req - Express request object.
+ * @param res - Express response object.
+ * @returns Response with the status and user data or error message.
+ */
+export const getUserById = async (req: Request, res: Response): Promise<Response> => {
     try {
-        const userId = parseInt(req.params.id, 10); // ondalık sayı sistemine göre çevrim yapılır
+        const userId = parseInt(req.params.id, 10); // Convert to decimal number
         const user = await userService.getUserById(userId);
 
         if (user) {
@@ -96,54 +102,65 @@ export const getUserByIdEndpoint = async (req: Request, res: Response): Promise<
     }
 };
 
+/**
+ * Endpoint to update a user by ID.
+ * @param req - Express request object.
+ * @param res - Express response object.
+ * @returns Response with the status and updated user data or error message.
+ */
 export const updateUser = async (req: Request, res: Response): Promise<Response> => {
     const userId = parseInt(req.params.id, 10);
     const updatedData = req.body;
 
     try {
         const updateUserResponse = await userService.updateUser(userId, updatedData);
-        let statusCode = 200;
+        let statusCode = HTTP_STATUS.SUCCESS;
 
-        if (typeof updateUserResponse === 'string') {
-            statusCode = updateUserResponse === ERROR_MESSAGES.USER_NOT_FOUND ? 404 : 500;
+        if (typeof updateUserResponse === DATA_TYPE.STRING) {
+            statusCode = updateUserResponse === ERROR_MESSAGES.USER_NOT_FOUND ? HTTP_STATUS.NOT_FOUND : HTTP_STATUS.SERVER_ERROR;
         }
 
         return res.status(statusCode).json({
             status: statusCode,
-            data: typeof updateUserResponse === 'string' ? null : updateUserResponse,
-            message: typeof updateUserResponse === 'string' ? updateUserResponse : 'User updated successfully'
+            data: typeof updateUserResponse === DATA_TYPE.STRING ? null : updateUserResponse,
+            message: typeof updateUserResponse === DATA_TYPE.STRING ? updateUserResponse : SUCCESS_MESSAGES.USER_UPDATED_SUCCESS
         });
     } catch (err) {
         logger.error(`Error updating user: ${err}`);
-        return res.status(500).json({
-            status: 500,
-            message: 'Internal Server Error'
+        return res.status(HTTP_STATUS.SERVER_ERROR).json({
+            status: HTTP_STATUS.SERVER_ERROR,
+            message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR
         });
     }
 };
 
-
+/**
+ * Endpoint to delete a user by ID.
+ * @param req - Express request object containing the user ID in the URL parameters.
+ * @param res - Express response object.
+ * @returns A JSON response with the status, success flag, and message.
+ */
 export const deleteUser = async (req: Request, res: Response): Promise<Response> => {
     const userId = parseInt(req.params.id, 10);
 
     try {
         const deleteUserResponse = await userService.deleteUser(userId);
-        let statusCode = 200; // Varsayılan başarılı durum kodu
+        let statusCode = HTTP_STATUS.SUCCESS; // Default success status code
 
-        if (typeof deleteUserResponse === 'string') {
+        if (typeof deleteUserResponse === DATA_TYPE.STRING) {
             statusCode = deleteUserResponse === ERROR_MESSAGES.USER_NOT_FOUND ? 404 : 500;
         }
 
         return res.status(statusCode).json({
             status: statusCode,
-            success: typeof deleteUserResponse === 'boolean' ? deleteUserResponse : false,
-            message: typeof deleteUserResponse === 'string' ? deleteUserResponse : 'User deleted successfully'
+            success: typeof deleteUserResponse === DATA_TYPE.BOOLEAN ? deleteUserResponse : false,
+            message: typeof deleteUserResponse === DATA_TYPE.STRING ? deleteUserResponse : SUCCESS_MESSAGES.USER_DELETED_SUCCESS
         });
     } catch (err) {
         logger.error(`Error deleting user: ${err}`);
-        return res.status(500).json({
-            status: 500,
-            message: 'Internal Server Error'
+        return res.status(HTTP_STATUS.SERVER_ERROR).json({
+            status: HTTP_STATUS.SERVER_ERROR,
+            message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR
         });
     }
 };
